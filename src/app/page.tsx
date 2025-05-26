@@ -2,16 +2,27 @@
 
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
-import image from "../../public/aliabbas.jpeg"
+import image from "../../public/aliabbas.jpeg";
+
+type Star = {
+  left: string;
+  top: string;
+  width: string;
+  height: string;
+  opacity: number;
+};
+
+
 
 export default function BirthdayWish() {
   const [isCelebrating, setIsCelebrating] = useState(false);
   const [buttonText, setButtonText] = useState('Send Birthday Wishes to Ali!');
-  const [confetti, setConfetti] = useState<Array<{id: number, x: number, y: number, rotation: number, color: string, size: number, shape: string, delay: number}>>([]);
+  const [confetti, setConfetti] = useState<ConfettiPiece[]>([]);
   const [showWishes, setShowWishes] = useState(false);
   const [glowPosition, setGlowPosition] = useState({ x: 0, y: 0 });
+  const [stars, setStars] = useState<Star[]>([]);
+  const [isMounted, setIsMounted] = useState(false);
 
-  // Sample wishes data
   const wishes = [
     "May your day be filled with laughter and joy!",
     "Wishing you success in all your endeavors!",
@@ -20,54 +31,95 @@ export default function BirthdayWish() {
     "Cheers to health, happiness, and prosperity!"
   ];
 
+  useEffect(() => {
+    setIsMounted(true);
+
+    const newStars = Array.from({ length: 50 }).map(() => ({
+      left: `${Math.random() * 100}%`,
+      top: `${Math.random() * 100}%`,
+      width: `${Math.random() * 3}px`,
+      height: `${Math.random() * 3}px`,
+      opacity: Math.random() * 0.8 + 0.2
+    }));
+    setStars(newStars);
+  }, []);
+
   const handleCongratulate = () => {
     setIsCelebrating(true);
     setButtonText('🎉 HAPPY BIRTHDAY ALI! 🎉');
     setShowWishes(true);
-    
-    // Generate advanced confetti with different shapes and sizes
-    const newConfetti = [];
-    const shapes = ['circle', 'square', 'triangle'];
-    for (let i = 0; i < 100; i++) {
-      newConfetti.push({
-        id: i,
-        x: Math.random() * 100,
-        y: -10 - Math.random() * 20,
-        rotation: Math.random() * 360,
-        color: `hsl(${Math.random() * 360}, 100%, ${50 + Math.random() * 20}%)`,
-        size: 5 + Math.random() * 10,
-        shape: shapes[Math.floor(Math.random() * shapes.length)],
-        delay: Math.random() * 2
-      });
-    }
-    setConfetti(newConfetti);
-    
-    // Reset after animation
-    setTimeout(() => {
-      setIsCelebrating(false);
-    }, 5000);
-    setTimeout(() => {
-      setConfetti([]);
-    }, 6000);
   };
 
-  const handleMouseMove = (e: React.MouseEvent) => {
+  interface GlowPosition {
+    x: number;
+    y: number;
+  }
+
+  interface Star {
+    left: string;
+    top: string;
+    width: string;
+    height: string;
+    opacity: number;
+  }
+
+  type ConfettiShape = 'circle' | 'square' | 'triangle';
+
+  interface ConfettiPiece {
+    id: number;
+    x: number;
+    y: number;
+    rotation: number;
+    color: string;
+    size: number;
+    shape: ConfettiShape;
+    delay: number;
+  }
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
     setGlowPosition({
       x: (e.clientX / window.innerWidth) * 100,
       y: (e.clientY / window.innerHeight) * 100
     });
   };
 
-  // Auto-trigger wishes after 5 seconds
   useEffect(() => {
-    const timer = setTimeout(() => {
-      if (!isCelebrating) setShowWishes(true);
-    }, 5000);
-    return () => clearTimeout(timer);
-  }, []);
+    if (isCelebrating && isMounted) {
+      const newConfetti = [];
+      const shapes = ['circle', 'square', 'triangle'];
+      for (let i = 0; i < 100; i++) {
+        newConfetti.push({
+          id: i,
+          x: Math.random() * 100,
+          y: -10 - Math.random() * 20,
+          rotation: Math.random() * 360,
+          color: `hsl(${Math.random() * 360}, 100%, ${50 + Math.random() * 20}%)`,
+          size: 5 + Math.random() * 10,
+          shape: shapes[Math.floor(Math.random() * shapes.length)] as ConfettiShape,
+          delay: Math.random() * 2
+        });
+      }
+      setConfetti(newConfetti);
+
+      setTimeout(() => {
+        setIsCelebrating(false);
+      }, 5000);
+      setTimeout(() => {
+        setConfetti([]);
+      }, 6000);
+    }
+  }, [isCelebrating, isMounted]);
+
+  if (!isMounted) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 flex items-center justify-center">
+        <div className="text-white text-xl">Loading birthday celebration...</div>
+      </div>
+    );
+  }
 
   return (
-    <div 
+    <div
       className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 flex flex-col items-center justify-center p-4 overflow-hidden relative"
       onMouseMove={handleMouseMove}
     >
@@ -75,8 +127,8 @@ export default function BirthdayWish() {
         <title>Happy Birthday Ali Abbas!</title>
       </Head>
 
-      {/* Animated background glow */}
-      <div 
+      {/* Glow background */}
+      <div
         className="absolute inset-0 pointer-events-none transition-opacity duration-1000"
         style={{
           background: `radial-gradient(circle at ${glowPosition.x}% ${glowPosition.y}%, rgba(156, 39, 176, 0.15) 0%, transparent 70%)`,
@@ -84,17 +136,17 @@ export default function BirthdayWish() {
         }}
       />
 
-      {/* Stars background */}
-      {Array.from({ length: 50 }).map((_, i) => (
+      {/* Stars */}
+      {stars.map((star, i) => (
         <div
           key={i}
           className="absolute rounded-full bg-white"
           style={{
-            left: `${Math.random() * 100}%`,
-            top: `${Math.random() * 100}%`,
-            width: `${Math.random() * 3}px`,
-            height: `${Math.random() * 3}px`,
-            opacity: Math.random() * 0.8 + 0.2,
+            left: star.left,
+            top: star.top,
+            width: star.width,
+            height: star.height,
+            opacity: star.opacity,
             animation: `twinkle ${2 + Math.random() * 3}s infinite alternate`
           }}
         />
@@ -120,11 +172,11 @@ export default function BirthdayWish() {
 
       <div className={`max-w-6xl w-full bg-gray-800 bg-opacity-80 backdrop-blur-lg rounded-2xl shadow-2xl p-8 transition-all duration-1000 ${isCelebrating ? 'scale-105 ring-2 ring-purple-500' : ''}`}>
         <div className="flex flex-col md:flex-row gap-8 items-center">
-          {/* Profile Image - Replace with Ali's actual image */}
+          {/* Image */}
           <div className="relative group flex-shrink-0">
             <div className={`w-80 h-80 rounded-full border-4 ${isCelebrating ? 'border-purple-500' : 'border-purple-600'} overflow-hidden transition-all duration-500 ${isCelebrating ? 'scale-110 rotate-3' : ''}`}>
-              <img 
-                src={image.src} 
+              <img
+                src={image.src}
                 alt="Ali Abbas"
                 className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
               />
@@ -132,25 +184,22 @@ export default function BirthdayWish() {
             <div className={`absolute -inset-4 rounded-full border-2 ${isCelebrating ? 'border-pink-500' : 'border-purple-400'} opacity-70 animate-ping-slow pointer-events-none`}></div>
           </div>
 
-          {/* Text Content */}
+          {/* Text + Button */}
           <div className="flex-1 text-center md:text-left">
             <h1 className="text-4xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-400 to-purple-400 mb-4 animate-text-pulse">
               Happy Birthday <span className="text-white">Ali Abbas!</span>
             </h1>
-            
             <p className="text-lg text-gray-300 mb-6 leading-relaxed">
-              On this special day, I wish you endless happiness, tremendous success, 
+              On this special day, I wish you endless happiness, tremendous success,
               and all the love your heart can hold. May this year be your best one yet!
             </p>
-
             <div className="flex justify-center md:justify-start">
               <button
                 onClick={handleCongratulate}
-                className={`px-8 py-4 rounded-full font-bold text-white transition-all duration-500 transform ${
-                  isCelebrating 
-                    ? 'bg-gradient-to-r from-purple-600 to-pink-600 scale-110 shadow-xl ring-4 ring-purple-400/50' 
-                    : 'bg-gradient-to-r from-purple-700 to-pink-700 hover:scale-105 hover:shadow-lg'
-                } relative overflow-hidden group`}
+                className={`px-8 py-4 rounded-full font-bold text-white transition-all duration-500 transform ${isCelebrating
+                  ? 'bg-gradient-to-r from-purple-600 to-pink-600 scale-110 shadow-xl ring-4 ring-purple-400/50'
+                  : 'bg-gradient-to-r from-purple-700 to-pink-700 hover:scale-105 hover:shadow-lg'
+                  } relative overflow-hidden group`}
               >
                 <span className="relative z-10 flex items-center gap-2">
                   {buttonText}
@@ -161,13 +210,13 @@ export default function BirthdayWish() {
           </div>
         </div>
 
-        {/* Wishes Section */}
+        {/* Wishes */}
         {showWishes && (
-          <div className={`mt-12 pt-6 border-t border-gray-700 transition-all duration-1000 ${isCelebrating ? 'opacity-100 translate-y-0' : 'opacity-90'}`}>
+          <div className="mt-12 pt-6 border-t border-gray-700 transition-all duration-1000">
             <h2 className="text-2xl font-semibold text-purple-300 mb-4 text-center">Birthday Wishes for Ali</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {wishes.map((wish, index) => (
-                <div 
+                <div
                   key={index}
                   className={`p-4 rounded-lg bg-gray-700 bg-opacity-50 backdrop-blur-sm border-l-4 ${index % 3 === 0 ? 'border-purple-500' : index % 3 === 1 ? 'border-pink-500' : 'border-blue-500'} transition-all duration-300 hover:scale-[1.02] hover:bg-opacity-70`}
                   style={{
@@ -183,7 +232,7 @@ export default function BirthdayWish() {
         )}
       </div>
 
-      {/* Floating balloons */}
+      {/* Balloons */}
       {isCelebrating && (
         <>
           {Array.from({ length: 8 }).map((_, i) => (
