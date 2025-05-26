@@ -42,11 +42,6 @@ export default function BirthdayWish() {
     setShowWishes(true);
   };
 
-  interface GlowPosition {
-    x: number;
-    y: number;
-  }
-
   interface Star {
     left: string;
     top: string;
