@@ -4,14 +4,6 @@ import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import image from "../../public/aliabbas.jpeg";
 
-type Star = {
-  left: string;
-  top: string;
-  width: string;
-  height: string;
-  opacity: number;
-};
-
 
 
 export default function BirthdayWish() {
