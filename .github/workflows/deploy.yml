@@ -13,3 +13,17 @@ jobs:
     steps:
       - name: Checkout the code
         uses: actions/checkout@v2
+
+      - name: Execute remote SSH commands using password
+        uses: appleboy/ssh-action@v0.1.10
+        with:
+          host: 51.21.245.250
+          username: ubuntu
+          key: ${{ secrets.PRIVATE_SSH_KEY }}
+          port: 22
+          script: |
+            cd ~/Cohort-ci-cd || exit 1
+            git pull origin main
+            npm install
+            npm run build
+            npm run start
